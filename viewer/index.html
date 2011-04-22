@@ -1,0 +1,80 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <meta charset="utf-8" />
+    <title>android-locdump gpx viewer</title>
+    <script src="OpenLayers.js"></script>
+    <script src="GPX.js"></script>
+    <style>
+        html, body {
+            margin: 0;
+            padding: 0;
+            height: 100%;
+        }
+        a {
+            color: #eee;
+        }
+        .olControlPanZoom {
+            cursor: pointer;
+        }
+        .olControlAttribution {
+            position: absolute; 
+            font-size: smaller; 
+            right: 3px; 
+            bottom: 3px; 
+        }
+        .olControlAttribution {
+            background-color: rgba(1,1,1,0.75);
+            color: white;
+        }
+        #message {
+            position: absolute;
+            z-index: 2000;
+            background-color: rgba(1,1,1,0.75);
+            padding: 4px;
+            color: white;
+            font-size: smaller;
+            left: 100px;
+        }
+    </style>
+  </head>
+  <body>
+    <div id="map" style="width: 100%; height:100%">
+      <div id="message">drop a gpx file produced with <a href="https://github.com/packetlss/android-locdump/">android-locdump</a> into the map.</div>
+    </div>
+    <script>
+      OpenLayers.ImgPath = "http://js.mapbox.com/theme/dark/";
+
+      var element = document.getElementById('map');
+      var map = new OpenLayers.Map(element, {
+          layers: [new OpenLayers.Layer.OSM()],
+          theme: false
+      });
+      var vector = new OpenLayers.Layer.Vector();
+      map.addLayers([vector]);
+      map.zoomToMaxExtent();
+      
+      var format = new OpenLayers.Format.GPX({
+          internalProjection: new OpenLayers.Projection("EPSG:900913"),
+          extractWaypoints: false,
+          extractRoutes: false
+      });
+
+      element.addEventListener('dragover', function(evt) {
+          evt.preventDefault();
+      }, true);
+      element.addEventListener('drop', function(evt) {
+          evt.preventDefault();
+          var reader = new FileReader;
+          reader.onloadend = function() {
+              var line = format.read(this.result)
+              vector.addFeatures(line);
+              map.zoomToExtent(vector.getDataExtent());
+          };
+          for (var i = 0; i < evt.dataTransfer.files.length; i++) {
+              reader.readAsText(evt.dataTransfer.files[i]);
+          }
+      }, true);
+    </script>
+  </body>
+</html>
