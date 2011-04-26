@@ -30,13 +30,13 @@ OpenLayers.Format.GPX = OpenLayers.Class(OpenLayers.Format.XML, {
     * APIProperty: extractTracks
     * {Boolean} Extract tracks from GPX. (default: true)
     */
-    extractTracks: true,
+    extractTracks: false,
 
    /**
     * APIProperty: extractRoutes
     * {Boolean} Extract routes from GPX. (default: true)
     */
-    extractRoutes: true,
+    extractRoutes: false,
 
     /**
      * APIProperty: extractAttributes
@@ -139,17 +139,21 @@ OpenLayers.Format.GPX = OpenLayers.Class(OpenLayers.Format.XML, {
                     time = OpenLayers.Date.parse(points[i].getElementsByTagName("time")[0].firstChild.nodeValue);
                     name = points[i].getElementsByTagName("name")[0].firstChild.nodeValue;
                     accuracy = parseInt(desc[0].split(":")[1]);
+		    // this need some refinement; applying logarithmic transparency to data blobs
+		    transp = (Math.log(((Math.round(((((Math.log(accuracy)*0.055)-0.1)*100)+3)%3)/100)+0.2))+1.7)*1.5;
                     confidence = parseInt(desc[1].split(":")[1]);
 
                     center = new OpenLayers.Geometry.Point(points[i].getAttribute("lon"), points[i].getAttribute("lat"));
                     center.transform(this.externalProjection, this.internalProjection);
-                    point = OpenLayers.Geometry.Polygon.createRegularPolygon(center, accuracy/2, 40, 0);
+                    // giving highly accurate points SOME credit!!
+		    point = OpenLayers.Geometry.Polygon.createRegularPolygon(center, accuracy/2>25?accuracy/2:25, 35, 0);
 
                     features.push(new OpenLayers.Feature.Vector(point, {
                     }, OpenLayers.Util.applyDefaults({
                         //label: time,
-                        //fillOpacity: accuracy / 100
-                        strokeColor: '#eee'
+                        fillOpacity: transp,
+                        strokeColor: '#acf',
+			fillColor: '#0044cc' // changing orange default to blue
                     }, OpenLayers.Feature.Vector.style.default)));
                 }
             }
